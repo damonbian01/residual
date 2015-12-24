@@ -40,8 +40,10 @@ public class Residual {
 		
 		/*对顶点是否疑似做初步标记*/
 		for(Node node : trainNodes) {
-			if(node.getIndex() == 0 || node.getIndex() == trainNodes.size() - 1)
+			if(node.getIndex() == 0 || node.getIndex() == trainNodes.size() - 1) {
+				node.setFlag(Node.LK);
 				continue;
+			}
 			node.setFlag(node.getDeta()>thresholdDeta?Node.LK:Node.uLK);
 		}
 	}
@@ -63,14 +65,45 @@ public class Residual {
 	 * 1、计算erfa和bta
 	 * 2、计算e1和e2
 	 * */
-	public void calResidual(int indexOfNode) {
+	public void calResidual(int indexOfNode, List<Node> allNodes) {
 		/*填充前向窗口*/
 	}
 	
 	/**
-	 * 填充前向窗口
+	 * 填充前向窗口,忽略疑似异常点
 	 * */
-	public void fillWindow(int indexOfNode) {
-		
+	public void fillPreWindow(int indexOfNode, List<Node> allNodes) {
+		List<Node> nodes = NodeUtil.getNodeByIndex(allNodes, indexOfNode).getPreNodes();
+		int size = this.widthOfWindow;
+		for(int i = 1; indexOfNode - i > 0 && size > 0; i++) {
+			Node tempNode = NodeUtil.getNodeByIndex(allNodes, indexOfNode - i);
+			if(tempNode.getFlag() != Node.uLK) {
+				nodes.add(tempNode);
+				size--;
+			}
+		}
+		if(size != 0) {
+			System.out.println("Node " + indexOfNode + " 前向窗口填充失败！");
+			System.exit(1);
+		}
 	}
+	
+	/**
+	 * 填充后向窗口,忽略异常点(此处可以考虑不忽略异常点，否则后向点数量太少填充不满)
+	 * */
+	public void fillBackWindow(int indexOfNode, List<Node> allNodes) {
+		List<Node> nodes = NodeUtil.getNodeByIndex(allNodes, indexOfNode).getBackNodes();
+		int size = this.widthOfWindow;
+		for(int i = 1; indexOfNode + i < allNodes.size() - 1; i++) {
+			Node tempNode = NodeUtil.getNodeByIndex(allNodes, indexOfNode + i);
+			if(tempNode.getFlag() != Node.uLK) {
+				nodes.add(tempNode);
+				size--;
+			}
+		}
+		if(size != 0) {
+			System.out.println("Node " + indexOfNode + " 后向窗口填充失败！");
+			System.exit(1);
+		}
+	} 
 }

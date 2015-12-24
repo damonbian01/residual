@@ -1,5 +1,8 @@
 package com.damonbian.algorithm;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 
  * @author biantao
@@ -22,6 +25,10 @@ public class Node {
 	private int flag;
 	/*残差residual*/
 	private double residual; 
+	/*前向窗口内的Node集合*/
+	private List<Node> preNodes = new ArrayList<Node>();
+	/*后向窗口内的Node集合*/
+	private List<Node> backNodes = new ArrayList<Node>();
 	
 	public Node() {
 		// TODO Auto-generated constructor stub
@@ -74,5 +81,21 @@ public class Node {
 	public void setResidual(double residual) {
 		this.residual = residual;
 	}
-	
+
+	public List<Node> getPreNodes() {
+		return preNodes;
+	}
+
+	public void setPreNodes(List<Node> preNodes) {
+		this.preNodes = preNodes;
+	}
+
+	public List<Node> getBackNodes() {
+		return backNodes;
+	}
+
+	public void setBackNodes(List<Node> backNodes) {
+		this.backNodes = backNodes;
+	}
+
 }
