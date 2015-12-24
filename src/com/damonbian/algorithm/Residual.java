@@ -67,6 +67,9 @@ public class Residual {
 	 * */
 	private void calResidual(int indexOfNode, List<Node> allNodes) {
 		/*填充前向窗口*/
+		fillPreWindow(indexOfNode, allNodes);
+		/*填充后向窗口*/
+		fillBackWindow(indexOfNode, allNodes);
 	}
 	
 	/**
@@ -106,4 +109,13 @@ public class Residual {
 			System.exit(1);
 		}
 	} 
+	
+	/**
+	 * 计算前向自相关函数估计值
+	 * 窗口外的计算样本值假设为0
+	 * 
+	 * */
+	private void calErFa(Node node) {
+		
+	}
 }
