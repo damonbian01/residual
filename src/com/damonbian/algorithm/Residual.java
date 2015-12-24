@@ -6,12 +6,14 @@ import com.damonbian.util.NodeUtil;
 
 /**
  * 基于残差统计的时间序列离群点检测
- * @author admin
+ * @author biantao
  * 2015-12-24
  */
 public class Residual {
 	/*门限deta*/
 	private double thresholdDeta = 0.0;
+	/*滑动窗口的宽度,缺省值为12*/
+	private int widthOfWindow = 12;
 	
 	/**
 	 * 算法入口
@@ -35,6 +37,13 @@ public class Residual {
 		}
 		/*计算门限-平均法*/
 		thresholdDeta /= (trainNodes.size()-2);
+		
+		/*对顶点是否疑似做初步标记*/
+		for(Node node : trainNodes) {
+			if(node.getIndex() == 0 || node.getIndex() == trainNodes.size() - 1)
+				continue;
+			node.setFlag(node.getDeta()>thresholdDeta?Node.LK:Node.uLK);
+		}
 	}
 	
 	/**
@@ -46,5 +55,22 @@ public class Residual {
 		Node B = NodeUtil.getNodeByIndex(allNodes, indexB);
 		Node C = NodeUtil.getNodeByIndex(allNodes, indexC);
 		return Math.abs(B.getValue() - A.getValue() + B.getValue() - C.getValue());
+	}
+	
+	/**
+	 * 计算残差residual
+	 * 输入参数：indexOfNode
+	 * 1、计算erfa和bta
+	 * 2、计算e1和e2
+	 * */
+	public void calResidual(int indexOfNode) {
+		/*填充前向窗口*/
+	}
+	
+	/**
+	 * 填充前向窗口
+	 * */
+	public void fillWindow(int indexOfNode) {
+		
 	}
 }

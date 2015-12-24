@@ -2,7 +2,7 @@ package com.damonbian.algorithm;
 
 /**
  * 
- * @author admin
+ * @author biantao
  * 2015-12-24
  */
 public class Node {
@@ -15,11 +15,13 @@ public class Node {
 	/*节点名称*/
 	private String nodeName;
 	/*节点值*/
-	private Double value;
+	private double value;
 	/*deta*/
-	private Double deta;
+	private double deta;
 	/*标记是否为意思离群点 1-LK 0-uLK*/
 	private int flag;
+	/*残差residual*/
+	private double residual; 
 	
 	public Node() {
 		// TODO Auto-generated constructor stub
@@ -41,19 +43,19 @@ public class Node {
 		this.nodeName = nodeName;
 	}
 
-	public Double getValue() {
+	public double getValue() {
 		return value;
 	}
 
-	public void setValue(Double value) {
+	public void setValue(double value) {
 		this.value = value;
 	}
 
-	public Double getDeta() {
+	public double getDeta() {
 		return deta;
 	}
 
-	public void setDeta(Double deta) {
+	public void setDeta(double deta) {
 		this.deta = deta;
 	}
 
@@ -65,4 +67,12 @@ public class Node {
 		this.flag = flag;
 	}
 
+	public double getResidual() {
+		return residual;
+	}
+
+	public void setResidual(double residual) {
+		this.residual = residual;
+	}
+	
 }

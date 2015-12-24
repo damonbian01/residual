@@ -2,7 +2,7 @@ package com.damonbian.util;
 
 /**
  * 
- * @author admin
+ * @author biantao
  * 2015-12-24
  */
 public class InitFile {
