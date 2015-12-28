@@ -13,7 +13,7 @@ import java.util.List;
  * 20151228
  */
 public class Data {
-	public static int index = 0;
+	private int index = 0;
 	/*Nodes*/
 	private List<Node> Nodes = new ArrayList<Node>();
 	

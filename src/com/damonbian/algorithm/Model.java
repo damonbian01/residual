@@ -29,6 +29,9 @@ public class Model {
 	public Model(double confidence, double[] samples) {
 		this.confidence = confidence;
 		this.samples = samples;
+		System.out.println("=============================¿ªÊ¼Êä³ö²Ð²î===================================");
+		for(double sample:samples)
+			System.out.println(sample);
 	}
 
 	public double getConfidence() {
@@ -66,7 +69,7 @@ public class Model {
 	/**
 	 * f(x)
 	 */
-	private double f(double value) {
+	public double f(double value) {
 		return 1.0/(Math.sqrt(2*Math.PI)*cgm)*Math.pow(Math.E, (-1)*Math.pow((value - u), 2)/(2*Math.pow(cgm, 2)));
 	}
 	
@@ -82,7 +85,8 @@ public class Model {
 		tempSum = 0.0;
 		for(double value : samples)
 			tempSum += Math.pow(value - this.u, 2);
-		this.cgm = tempSum/samples.length;
+		this.cgm = Math.sqrt(tempSum/samples.length);
+		System.out.println("u is "+this.u+" cgm is "+this.cgm);
 	}
 	
 	/**
