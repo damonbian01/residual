@@ -23,6 +23,8 @@ public class Node {
 	private double deta;
 	/*标记是否为意思离群点 1-LK 0-uLK*/
 	private int flag;
+	/*节点预测后的标记*/
+	private int realFlag;
 	/*残差residual*/
 	private double residual; 
 	/*前向窗口内的Node集合*/
@@ -32,6 +34,13 @@ public class Node {
 	
 	public Node() {
 		// TODO Auto-generated constructor stub
+	}
+	
+	public Node(int index, String nodeName, double value) {
+		super();
+		this.index = index;
+		this.nodeName = nodeName;
+		this.value = value;
 	}
 
 	public int getIndex() {
@@ -74,6 +83,14 @@ public class Node {
 		this.flag = flag;
 	}
 
+	public int getRealFlag() {
+		return realFlag;
+	}
+
+	public void setRealFlag(int realFlag) {
+		this.realFlag = realFlag;
+	}
+
 	public double getResidual() {
 		return residual;
 	}
@@ -96,6 +113,10 @@ public class Node {
 
 	public void setBackNodes(List<Node> backNodes) {
 		this.backNodes = backNodes;
+	}
+	
+	public String toString() {
+		return this.index+" "+this.nodeName+" "+this.value;
 	}
 
 }

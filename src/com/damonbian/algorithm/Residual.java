@@ -1,5 +1,6 @@
 package com.damonbian.algorithm;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.damonbian.util.NodeUtil;
@@ -18,13 +19,47 @@ public class Residual {
 	private int widthOfWindow = 12;
 	/*拟合阶数p,p缺省值为4且 p<widthOfWindow*/
 	private int p = 4;
+	/*模型Model*/
+	private Model model;
+	/*输入nodes*/
+	private List<Node> nodes;
 	
+	public Residual(List<Node> nodes) {
+		this.nodes = nodes;
+	}
+	
+	public Residual(List<Node> nodes, int widthOfWindow, int p) {
+		this.nodes = nodes;
+		this.widthOfWindow = widthOfWindow;
+		this.p = p;
+	}
+
 	/**
 	 * 算法入口
 	 */
 	public void start() {
-		System.out.println("开始检测异常点");
-		System.out.println("异常点检测结束");
+		System.out.println("=====================开始检测异常点=====================");
+		System.out.println("=====================开始标记疑似点=====================");
+		markLkOrUlk(nodes);
+		System.out.println("=====================计算指定区间窗口=====================");
+		fillWindow(13, 300, nodes);
+		System.out.println("=====================计算指定区间残差=====================");
+		calResidual(13, 300, nodes);
+		System.out.println("=====================训练,预测模型=====================");
+		train(getTrainNodes(13, 300, nodes));
+		outFlag(getTrainNodes(13, 300, nodes));
+		System.out.println("=====================异常点检测结束=====================");
+	}
+	
+	private List<Node> getTrainNodes(int indexStart, int indexEnd, List<Node> nodes) {
+		List<Node> tempNodes = new ArrayList<Node>();
+		for(Node node : nodes) {
+			if(node.getIndex() < indexStart || node.getIndex() > indexEnd)
+				continue;
+			else
+				tempNodes.add(node);
+		}
+		return tempNodes;
 	}
 
 	/**
@@ -64,16 +99,20 @@ public class Residual {
 	}
 	
 	/**
-	 * 计算残差residual
-	 * 输入参数：indexOfNode
-	 * 1、计算erfa和bta
-	 * 2、计算e1和e2
-	 * */
-	private void calResidual(int indexOfNode, List<Node> allNodes) {
-		/*填充前向窗口*/
-		fillPreWindow(indexOfNode, allNodes);
-		/*填充后向窗口*/
-		fillBackWindow(indexOfNode, allNodes);
+	 * 填充指定区间的数据的窗口
+	 */
+	private void fillWindow(int indexStart, int indexEnd, List<Node> allNodes) {
+		for(Node node : allNodes) {
+			int index = node.getIndex();
+			if(index < indexStart || index > indexEnd)
+				continue;
+			else {
+				/*填充前向窗口*/
+				fillPreWindow(index, allNodes);
+				/*填充后向窗口*/
+				fillBackWindow(index, allNodes);
+			}
+		}
 	}
 	
 	/**
@@ -115,10 +154,16 @@ public class Residual {
 	} 
 	
 	/**
-	 * 计算残差
+	 * 计算指定区间Node的残差
 	 */
-	private void calResidual(Node node) {
-		node.setResidual(calPreResidual(node) + calBackResidual(node));
+	private void calResidual(int indexStart, int indexEnd, List<Node> allNodes) {
+		for(Node node : allNodes) {
+			int index = node.getIndex();
+			if(index < indexStart || index > indexEnd)
+				continue;
+			else
+				node.setResidual(calPreResidual(node) + calBackResidual(node));
+		}
 	}
 	
 	/**
@@ -134,7 +179,6 @@ public class Residual {
 		for(int k = 0; k <= p; k++) {
 			double tempSum = 0.0;
 			for(int j = 0; j <= widthOfWindow - 1; j++) {
-//				tempSum += (parseValue(0, node, node.getIndex() - widthOfWindow + j) * parseValue(0, node, node.getIndex() - widthOfWindow + j + k));
 				tempSum += (parseValue(0, node, widthOfWindow - j) * parseValue(0, node, widthOfWindow - j - k));
 			}
 			rx[k] = (1.0/((double) widthOfWindow))*tempSum;
@@ -176,17 +220,6 @@ public class Residual {
 	 * type = 0 表示前向窗口
 	 * type = 1表示后向窗口
 	 */
-/*	private double parseValue(int type, Node node, int index) {
-		List<Node> nodes = (type == 0)?node.getPreNodes():node.getBackNodes();
-		for(Node subNode : nodes) {
-			if(subNode.getIndex() == index)
-				return subNode.getValue();
-			else
-				continue;
-		}
-		return 0.0;
-	}*/
-	
 	private double parseValue(int type, Node node, int index) {
 		List<Node> nodes = (type == 0)?node.getPreNodes():node.getBackNodes();
 		if(index > widthOfWindow || index < 0)
@@ -239,4 +272,40 @@ public class Residual {
 		}
 		return result;
 	}
+	
+	/**
+	 * 通过高斯分布预测模型
+	 * trainNodes不等于allNodes
+	 */
+	private void train(List<Node> trainNodes) {
+		double[] temp = new double[trainNodes.size()];
+		for(int i = 0; i < trainNodes.size(); i++)
+			temp[i] = trainNodes.get(i).getValue();
+		model = new Model(0.90, temp);
+		model.train();
+	}
+	
+	/**
+	 * 输出预测结果
+	 */
+	private void outFlag(List<Node> trainNodes) {
+		for(Node node : trainNodes) {
+			if(model == null) {
+				System.out.println("Model还未训练");
+				System.exit(1);
+			} else {
+				node.setRealFlag(model.predict(node.getValue()));
+				switch(node.getRealFlag()) {
+				case Model.NORMAL:
+					System.out.println(node.toString()+" predict lable is normal");
+					break;
+				case Model.UNNORMAL:
+					System.out.println(node.toString()+" predict lable is unnormal");
+					break;
+				}
+			}
+		}
+		System.out.println("训练结束");
+	}
+	
 }
