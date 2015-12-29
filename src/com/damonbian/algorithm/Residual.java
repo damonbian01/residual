@@ -13,12 +13,18 @@ import Jama.Matrix;
  * 2015-12-24
  */
 public class Residual {
+	/*参数,调试参数*/
+	private double confidence;
+	/*参数，文件偏移*/
+	private int offset;
+	/*参数，检测时间间隔*/
+	private int frequent;
 	/*门限deta*/
 	private double thresholdDeta = 0.0;
 	/*滑动窗口的宽度,缺省值为12*/
-	private int widthOfWindow = 6;
+	private int widthOfWindow = 7;
 	/*拟合阶数p,p缺省值为4且 p<widthOfWindow*/
-	private int p = 4;
+	private int p = 3;
 	/*模型Model*/
 	private Model model;
 	/*输入nodes*/
@@ -28,8 +34,11 @@ public class Residual {
 		this.nodes = nodes;
 	}
 	
-	public Residual(List<Node> nodes, int widthOfWindow, int p) {
+	public Residual(List<Node> nodes, double confidence, int offset, int frequent, int widthOfWindow, int p) {
 		this.nodes = nodes;
+		this.confidence = confidence;
+		this.offset = offset;
+		this.frequent = frequent;
 		this.widthOfWindow = widthOfWindow;
 		this.p = p;
 	}
@@ -38,30 +47,17 @@ public class Residual {
 	 * 算法入口
 	 */
 	public void start() {
-		System.out.println("=====================开始检测异常点=====================");
-		System.out.println("=====================开始标记疑似点=====================");
 		markLkOrUlk(nodes);
-		System.out.println("=====================计算指定区间窗口=====================");
-		fillWindow(13, 300, nodes);
-		System.out.println("=====================计算指定区间残差=====================");
-		calResidual(13, 300, nodes);
-		System.out.println("=====================训练,预测模型=====================");
-		train(getTrainNodes(13, 300, nodes));
-		outFlag(getTrainNodes(13, 300, nodes));
-//		System.out.println("=====================计算指定区间窗口=====================");
-//		fillWindow(30, 1800, nodes);
-//		System.out.println("=====================计算指定区间残差=====================");
-//		calResidual(30, 1800, nodes);
-//		System.out.println("=====================训练,预测模型=====================");
-//		train(getTrainNodes(30, 1800, nodes));
-//		outFlag(getTrainNodes(30, 1800, nodes));
-		System.out.println("=====================异常点检测结束=====================");
+		fillWindow(this.offset, nodes);
+		calResidual(this.offset, nodes);
+		train(getTrainNodes(this.offset, nodes));
+		outFlag(getTrainNodes(this.offset, nodes));
 	}
 	
-	private List<Node> getTrainNodes(int indexStart, int indexEnd, List<Node> nodes) {
+	private List<Node> getTrainNodes(int indexStart, List<Node> nodes) {
 		List<Node> tempNodes = new ArrayList<Node>();
 		for(Node node : nodes) {
-			if(node.getIndex() < indexStart || node.getIndex() > indexEnd)
+			if(node.getIndex() < indexStart)
 				continue;
 			else
 				tempNodes.add(node);
@@ -91,8 +87,8 @@ public class Residual {
 				node.setFlag(Node.LK);
 				continue;
 			}
-			node.setFlag(node.getDeta()>thresholdDeta?Node.LK:Node.uLK);
-			System.out.println(node.getIndex()+" "+node.getNodeName()+" "+node.getFlag());
+			node.setFlag(node.getDeta()>10*thresholdDeta?Node.LK:Node.uLK);
+//			System.out.println(node.getIndex()+"\t"+node.getDeta()+"\t"+node.getFlag());
 		}
 	}
 	
@@ -110,16 +106,16 @@ public class Residual {
 	/**
 	 * 填充指定区间的数据的窗口
 	 */
-	private void fillWindow(int indexStart, int indexEnd, List<Node> allNodes) {
+	private void fillWindow(int indexStart, List<Node> allNodes) {
 		for(Node node : allNodes) {
 			int index = node.getIndex();
-			if(index < indexStart || index > indexEnd)
+			if(index < indexStart)
 				continue;
 			else {
 				/*填充前向窗口*/
 				fillPreWindow(index, allNodes);
-				/*填充后向窗口*/
-				fillBackWindow(index, allNodes);
+				/*填充后向窗口,此处不参与计算，因为效果不是很好*/
+//				fillBackWindow(index, allNodes);
 			}
 		}
 	}
@@ -138,7 +134,7 @@ public class Residual {
 			}
 		}
 		if(size != 0) {
-			System.out.println("Node " + indexOfNode + " 前向窗口填充失败！");
+			System.err.println("Node " + indexOfNode + " 前向窗口填充失败！");
 			System.exit(1);
 		}
 	}
@@ -157,7 +153,7 @@ public class Residual {
 			}
 		}
 		if(size != 0) {
-			System.out.println("Node " + indexOfNode + " 后向窗口填充失败！");
+			System.err.println("Node " + indexOfNode + " 后向窗口填充失败！");
 			System.exit(1);
 		}
 	} 
@@ -165,14 +161,15 @@ public class Residual {
 	/**
 	 * 计算指定区间Node的残差
 	 */
-	private void calResidual(int indexStart, int indexEnd, List<Node> allNodes) {
+	private void calResidual(int indexStart, List<Node> allNodes) {
 		for(Node node : allNodes) {
 			int index = node.getIndex();
-			if(index < indexStart || index > indexEnd)
+			if(index < indexStart)
 				continue;
-			else
-				node.setResidual(Math.abs(calPreResidual(node) + calBackResidual(node)));
-//				node.setResidual(calPreResidual(node) + calBackResidual(node));
+			else {
+				/*取出前向窗口拟合*/
+				node.setResidual(Math.abs(calPreResidual(node)));
+			}
 		}
 	}
 	
@@ -235,7 +232,7 @@ public class Residual {
 		if(index > widthOfWindow || index < 0)
 			return 0.0;
 		else if(index == 0)
-			return node.getValue();
+			return 0;
 		else 
 			return nodes.get(index - 1).getValue();
 	}
@@ -288,10 +285,10 @@ public class Residual {
 	 * trainNodes不等于allNodes
 	 */
 	private void train(List<Node> trainNodes) {
-		double[] temp = new double[trainNodes.size()];
+		List<Double> temp = new ArrayList<Double>();
 		for(int i = 0; i < trainNodes.size(); i++)
-			temp[i] = trainNodes.get(i).getResidual();
-		model = new Model(0.10, temp);
+			temp.add(trainNodes.get(i).getResidual());
+		model = new Model(this.confidence, temp);
 		model.train();
 	}
 	
@@ -315,10 +312,6 @@ public class Residual {
 				}
 			}
 		}
-		
-		/*输出所有预测*/
-		for(Node node : trainNodes)
-			System.out.println(node.getIndex()+" "+node.getNodeName()+" "+model.f(node.getResidual())+" "+node.getRealFlag());
 		System.out.println("训练结束");
 	}
 	

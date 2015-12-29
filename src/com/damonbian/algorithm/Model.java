@@ -1,5 +1,10 @@
 package com.damonbian.algorithm;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 /**
  * 高斯分布模型
  * @author damonbian
@@ -9,29 +14,31 @@ public class Model {
 	/*二分类的正常点或者离群点*/
 	public static final int NORMAL = 100;
 	public static final int UNNORMAL = 101;
-	/*置信度,缺省值0.9*/
-	private double confidence = 0.9;
-	/*输入样本值数组*/
-	private double[] samples;
+	/*缺省值0.2*/
+	private double confidence = 0.2;
 	/*模型预测值u*/
 	private double u;
 	/*模型预测值cgm*/
 	private double cgm;
+	/*执行系数*/
+	private double mu = 0.95;
+	/*置信区间上下界*/
+	private double down;
+	private double up;
+	/*记录离群点的残差集合*/
+	private List<Double> outLiers = new ArrayList<Double>();
 	
 	public Model() {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public Model(double[] samples) {
-		this.samples = samples;
+	public Model(List<Double> samples) {
+		outLiers.addAll(samples);
 	}
 
-	public Model(double confidence, double[] samples) {
+	public Model(double confidence, List<Double> samples) {
 		this.confidence = confidence;
-		this.samples = samples;
-		System.out.println("=============================开始输出残差===================================");
-		for(double sample:samples)
-			System.out.println(sample);
+		outLiers.addAll(samples);
 	}
 
 	public double getConfidence() {
@@ -40,14 +47,6 @@ public class Model {
 
 	public void setConfidence(double confidence) {
 		this.confidence = confidence;
-	}
-
-	public double[] getSamples() {
-		return samples;
-	}
-
-	public void setSamples(double[] samples) {
-		this.samples = samples;
 	}
 
 	public double getU() {
@@ -78,21 +77,34 @@ public class Model {
 	 * 得到cgm和u
 	 */
 	public void train() {
-		double tempSum = 0.0;
-		for(double value : samples)
-			tempSum += value;
-		this.u = tempSum/samples.length;
-		tempSum = 0.0;
-		for(double value : samples)
-			tempSum += Math.pow(value - this.u, 2);
-		this.cgm = Math.sqrt(tempSum/samples.length);
-		System.out.println("u is "+this.u+" cgm is "+this.cgm);
+		Collections.sort(outLiers, new Comparator<Double>() {
+
+			@Override
+			public int compare(Double o1, Double o2) {
+				/*降序*/
+				return (o1.compareTo(o2) < 0)?1:-1;
+			}
+		});
+		double[] ks = new double[outLiers.size()];
+		for(int i = 0; i < outLiers.size(); i++) {
+			if(i == outLiers.size() - 1)
+				ks[i] = 0;
+			else 
+				ks[i] = (outLiers.get(i)-outLiers.get(i+1))/(outLiers.get(0)-outLiers.get(outLiers.size()-1));
+		}
+		
+		for(int i = outLiers.size() - 1; i >= 0; i--){
+			if(ks[i] < this.confidence)
+				outLiers.remove(i);
+			else
+				break;
+		}
 	}
 	
 	/**
 	 * 开始预测模型
 	 */
 	public int predict(double value) {
-		return f(value) < confidence ? UNNORMAL : NORMAL;
+		return outLiers.contains(value) ? UNNORMAL : NORMAL;
 	}
 }
