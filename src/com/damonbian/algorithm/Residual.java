@@ -296,11 +296,12 @@ public class Residual {
 	 * Êä³öÔ¤²â½á¹û
 	 */
 	private void outFlag(List<Node> trainNodes) {
-		for(Node node : trainNodes) {
+		for(int i = 0; i < this.frequent/5; i++) {
 			if(model == null) {
-				System.out.println("Model»¹Î´ÑµÁ·");
+				System.err.println("Model»¹Î´ÑµÁ·£¡");
 				System.exit(1);
 			} else {
+				Node node = trainNodes.get(trainNodes.size()-1-i);
 				node.setRealFlag(model.predict(node.getResidual()));
 				switch(node.getRealFlag()) {
 				case Model.NORMAL:
@@ -312,6 +313,23 @@ public class Residual {
 				}
 			}
 		}
+		
+//		for(Node node : trainNodes) {
+//			if(model == null) {
+//				System.out.println("Model»¹Î´ÑµÁ·");
+//				System.exit(1);
+//			} else {
+//				node.setRealFlag(model.predict(node.getResidual()));
+//				switch(node.getRealFlag()) {
+//				case Model.NORMAL:
+//					System.out.println(node.toString()+" predict lable is normal");
+//					break;
+//				case Model.UNNORMAL:
+//					System.out.println(node.toString()+" predict lable is unnormal");
+//					break;
+//				}
+//			}
+//		}
 		System.out.println("ÑµÁ·½áÊø");
 	}
 	
